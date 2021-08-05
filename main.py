@@ -11,7 +11,7 @@ def diff_month(d1, d2):
 
 # ------------------------------------------------------------------------------------------ MAKING LISTS ----------------------------------------------------------------------------------------
 inputfile = input("Enter animelist file:   ")
-file = open("animelist_1625113687_-_9255282.xml", mode='r')
+file = open(inputfile, mode='r')
 soup = BeautifulSoup(file, 'xml')
 
 name = [str(el.text) for el in soup.find_all("series_title")]
