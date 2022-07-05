@@ -2,6 +2,7 @@ from datetime import datetime
 from bs4 import BeautifulSoup
 import csv
 from AnilistPython import Anilist
+import time
 from colorama import Fore
 
 outputShows = False
@@ -10,13 +11,18 @@ outputShows = False
 def diff_month(d1, d2):
     return (d1.year - d2.year) * 12 + d1.month - d2.month
 
+anilist = Anilist()
 
 def check_for_seasonal(show, name):
+    time.sleep(1)
     if name == "Houkago Teibou Nisshi":
         return True
     #Uses the anilist library to fetch data about the anime
-    anilist = Anilist()
-    anime = anilist.get_anime(name)
+    try:
+        anime = anilist.get_anime(name)
+    except:
+        print(Fore.RED + " ERROR: Couldn't find show \"" + Fore.WHITE + name + Fore.RED + "\"on anilist")
+        return True
 
     ending_date = datetime.strptime(anime["ending_time"],"%m/%d/%Y")
     endDelta = (show.end - ending_date).days
@@ -249,9 +255,16 @@ for i in range(len(startdatetime)):
 
         if isSeasonal:
             if show.timeinstartmonth > 7:
-                monthSeasonal[str(show.startmonth)] = monthSeasonal[str(show.startmonth)] + (show.timeinstartmonth/7)
+                print(show.timeinstartmonth)
+                monthSeasonal[str(show.startmonth)] += ((show.timeinstartmonth / show.completiontime) * show.length)
+                # This was a flawed algorithm. I intended to not count eps watched before starting (i.e. if you start a show on ep 3, skip ep 1 and 2)
+                #monthSeasonal[str(show.startmonth)] = monthSeasonal[str(show.startmonth)] + (show.timeinstartmonth/7)
+                #print(Fore.BLUE + "For show " +Fore.WHITE+str(name[i]) + ", " + str(show.timeinstartmonth/7) + "eps were spend in start month")
             if show.timeinendmonth > 7:
-                monthSeasonal[str(show.endmonth)] = monthSeasonal[str(show.endmonth)] + (show.timeinendmonth / 7)
+                monthSeasonal[str(show.endmonth)] += ((show.timeinendmonth / show.completiontime) * show.length)
+                #monthSeasonal[str(show.endmonth)] = monthSeasonal[str(show.endmonth)] + (show.timeinendmonth / 7)
+                #print(Fore.BLUE + "For show " +Fore.WHITE+str(name[i]) + ", " + str(show.timeinendmonth/7) + "eps were spend in end month")
+                
 
 
         if show.score != 0:
@@ -280,7 +293,10 @@ for i in range(len(startdatetime)):
         for x in show.middlemonth:
             month[str(x)] = month[str(x)] + ((30 / show.completiontime) * show.length)
             if isSeasonal:
-                monthSeasonal[str(x)] = monthSeasonal[str(x)] + 4
+                monthSeasonal[str(x)] += ((30 / show.completiontime) * show.length)
+                # Also flawed algorithm - The rest of the program works with the (somewhat flawed) assumption
+                # that shows are distributed smoothly. This matches the inaccuracy with the rest.
+                #monthSeasonal[str(x)] = monthSeasonal[str(x)] + 4
             if show.score != 0:
                 monthsum[str(x)] += ((30 / show.completiontime) * (show.score * show.length))
                 monthscored[str(x)] += ((30 / show.completiontime) * show.length)
